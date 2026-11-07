@@ -64,6 +64,19 @@ const MOVEMENTS = [
   { id: 'counterclockwise', kind: 'movement', title: 'Move anticlockwise', detail: 'Circle to your left in small steps.' },
 ]
 
+// Keep the generated voice pack in sync with every phrase the trainer can call.
+export function voicePhrases() {
+  return [...new Set([
+    'Ready.', 'Guard.', 'Zero. Ready.', 'Rest.',
+    'One, two, three, four.', 'Ready. Guard. One, two, three, four.',
+    ...Array.from({ length: 11 }, (_, i) => String(i)),
+    ...Object.values(COMBOS).flat().map(combo => combo.join(', ')),
+    ...MOVEMENTS.map(cue => cue.title),
+    'Switch stance. Orthodox.', 'Switch stance. Southpaw.',
+    ...Object.values(DRILLS).flatMap(levels => Object.values(levels).flat().map(([title]) => title)),
+  ])]
+}
+
 export function pickCue(mode, settings, stance, previous, random = Math.random) {
   if (mode !== 'boxing') {
     const available = DRILLS[mode][settings.level].filter(([title]) => title !== previous)

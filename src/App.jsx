@@ -134,9 +134,10 @@ function Setup({ mode, settings, set, start, testAudio, go }) {
           </div>
           <div className="setting-group">
             <h2><Volume2 size={22} /> Sound</h2>
-            <Toggle name="voice" label="Spoken cues" checked={settings.voice} set={set} Icon={Volume2} />
+            <Toggle name="voice" label="Natural coach voice" checked={settings.voice} set={set} Icon={Volume2} />
+            <p className="audio-note">AI-generated voice. Cue pace changes the time between calls.</p>
             <Toggle name="bell" label="Round bell" checked={settings.bell} set={set} Icon={Bell} />
-            <button className="button outline small" disabled={!testingEnabled} onClick={() => setAudioNote(testAudio(settings))}>
+            <button className="button outline small" disabled={!testingEnabled} onClick={() => setAudioNote(testAudio(settings, setAudioNote))}>
               <Play size={15} /> Test audio
             </button>
             {audioNote && testingEnabled && <span className="audio-note" role="status">{audioNote}</span>}

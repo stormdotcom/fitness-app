@@ -1,96 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { makeAudio } from './audio.js'
 import { advanceSession, pauseSession, remainingSeconds, resumeSession, scheduleCue, startSession } from './session.js'
-
-function makeAudio() {
-  let context
-  let activeSpeech
-  const notes = new Set()
-
-  function unlock() {
-    const AudioContext = window.AudioContext || window.webkitAudioContext
-    if (!AudioContext) return
-    try {
-      context ??= new AudioContext()
-      return context.state === 'running' ? Promise.resolve() : context.resume().catch(() => {})
-    } catch {
-      // Visual cues still work if the browser disallows audio.
-    }
-  }
-
-  function bell() {
-    if (context?.state !== 'running') return
-    const start = context.currentTime
-    for (const [frequency, volume, decay] of [[784, 0.22, 0.9], [1318, 0.085, 0.58], [2093, 0.045, 0.28]]) {
-      const oscillator = context.createOscillator()
-      const envelope = context.createGain()
-      oscillator.frequency.value = frequency
-      envelope.gain.setValueAtTime(0.0001, start)
-      envelope.gain.exponentialRampToValueAtTime(volume, start + 0.012)
-      envelope.gain.exponentialRampToValueAtTime(0.0001, start + decay)
-      oscillator.connect(envelope).connect(context.destination)
-      oscillator.start(start)
-      oscillator.stop(start + decay)
-      notes.add(oscillator)
-      oscillator.onended = () => {
-        oscillator.disconnect()
-        envelope.disconnect()
-        notes.delete(oscillator)
-      }
-    }
-  }
-
-  function cancelSpeech() {
-    if (!activeSpeech) return
-    clearTimeout(activeSpeech.timeout)
-    activeSpeech = undefined
-    window.speechSynthesis.cancel()
-  }
-
-  function say(message, speed, done = () => {}) {
-    cancelSpeech()
-    if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) {
-      done()
-      return
-    }
-    const utterance = new window.SpeechSynthesisUtterance(message)
-    utterance.lang = 'en'
-    utterance.rate = { Slow: 0.82, Steady: 0.98, Fast: 1.13 }[speed]
-    const entry = { utterance }
-    const finish = () => {
-      if (activeSpeech !== entry) return
-      clearTimeout(entry.timeout)
-      activeSpeech = undefined
-      done()
-    }
-    entry.timeout = setTimeout(() => {
-      if (activeSpeech !== entry) return
-      finish()
-      window.speechSynthesis.cancel()
-    }, Math.min(6500, 1000 + message.length * 120 / utterance.rate))
-    activeSpeech = entry
-    utterance.onend = finish
-    utterance.onerror = finish
-    try {
-      window.speechSynthesis.speak(utterance)
-    } catch {
-      finish()
-    }
-  }
-
-  function stop() {
-    cancelSpeech()
-    for (const oscillator of notes) oscillator.stop()
-    notes.clear()
-  }
-
-  function close() {
-    stop()
-    if (context && context.state !== 'closed') context.close().catch(() => {})
-    context = undefined
-  }
-
-  return { unlock, bell, say, stop, close }
-}
 
 export default function useTraining() {
   const audioRef = useRef(null)
@@ -184,7 +94,7 @@ export default function useTraining() {
     audioPreview.current = null
     finishedCue.current = null
     audio.stop()
-    if (settings.bell || settings.voice) audio.unlock()
+    if (settings.bell || settings.voice) audio.unlock()?.catch(() => {})
     const now = performance.now()
     update(startSession(mode, settings, now), now)
   }
@@ -201,7 +111,7 @@ export default function useTraining() {
     const state = stateRef.current
     if (!state) return
     const now = performance.now()
-    if (state.settings.bell || state.settings.voice) audio.unlock()
+    if (state.settings.bell || state.settings.voice) audio.unlock()?.catch(() => {})
     update(resumeSession(state, now), now)
   }
 
@@ -210,17 +120,23 @@ export default function useTraining() {
     update(null, performance.now())
   }
 
-  function testAudio(settings) {
+  function testAudio(settings, report = () => {}) {
     audio.stop()
     const preview = Symbol('preview')
     audioPreview.current = preview
-    const unlocked = settings.bell ? audio.unlock() : null
-    unlocked?.then(() => { if (audioPreview.current === preview) audio.bell() })
-    const canSpeak = Boolean(window.speechSynthesis && window.SpeechSynthesisUtterance)
-    if (settings.voice && canSpeak) audio.say('Ready. Guard. One, two, three, four.', settings.speed)
-    if (settings.voice && !canSpeak) return 'Spoken cues are unavailable in this browser. The same cues appear on screen.'
-    if (settings.bell && !unlocked) return 'The round bell is unavailable in this browser.'
-    return 'Preview requested. If you hear silence, check your device volume.'
+    const unlocked = audio.unlock()
+    if (!unlocked) return 'Audio is unavailable in this browser. Cues still appear on screen.'
+    unlocked.then(async () => {
+      if (audioPreview.current !== preview) return
+      if (settings.bell) audio.bell()
+      const played = !settings.voice || await audio.say('Ready. Guard. One, two, three, four.', settings.speed)
+      if (audioPreview.current === preview) report(played
+        ? 'Preview finished. You can play it again.'
+        : 'Voice audio could not load. Check your connection and try again.')
+    }).catch(() => {
+      if (audioPreview.current === preview) report('Audio could not start. Tap Test audio again.')
+    })
+    return 'Playing preview…'
   }
 
   function stopAudio() {
