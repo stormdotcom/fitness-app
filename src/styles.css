@@ -1,6 +1,83 @@
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
+/* Learning uses the existing club palette and typography, with a quiet lesson rail. */
+.learning-page { padding-block: 38px 60px; }
+.learning-intro { display: grid; grid-template-columns: 1.3fr .7fr; gap: 35px; align-items: center; }
+.learning-label { color: var(--dark-blue); font-size: 13px; margin-bottom: 12px; }
+.learning-intro h1 { font-size: clamp(48px, 5.5vw, 78px); letter-spacing: -.025em; }
+.learning-intro > div > p:not(.learning-label) { color: var(--muted); line-height: 1.7; max-width: 60ch; margin-top: 20px; }
+.learning-ring { position: relative; min-height: 310px; border-radius: 12px; overflow: hidden; }
+.next-lesson { margin-top: 25px; border-left: 4px solid var(--blue); padding-left: 18px; }
+.next-lesson > span { color: var(--muted); font-size: 13px; }
+.next-lesson h2 { font-size: 30px; margin-block: 7px 14px; }
+.path-progress { margin-block: 32px; padding-block: 19px; border-block: 1px solid var(--line); display: grid; grid-template-columns: 1fr 1fr; gap: 12px 25px; }
+.path-progress progress { width: 100%; accent-color: var(--blue); align-self: center; }
+.path-progress p { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
+.module-list { display: grid; gap: 28px; }
+.learning-module { display: grid; grid-template-columns: .8fr 1.2fr; gap: 28px; border-bottom: 1px solid var(--line); padding-bottom: 28px; }
+.module-heading { padding: 14px 0; }
+.module-number { display: inline-block; color: var(--blue); margin-bottom: 12px; font-size: 13px; }
+.module-heading h2 { font-size: 38px; }
+.module-heading p { max-width: 40ch; color: var(--muted); line-height: 1.6; margin-block: 14px; }
+.module-heading > span:last-child { font-size: 13px; color: var(--muted); }
+.level-list, .level-list ul { list-style: none; margin: 0; padding: 0; }
+.level-list > li { margin-bottom: 15px; }
+.level-list h3 { font: inherit; font-size: 14px; line-height: 1.5; padding: 8px 0; }
+.level-list h3 > span { color: var(--muted); font-size: 12px; margin-right: 9px; }
+.lesson-link { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; background: white; border: 1px solid var(--line); border-radius: 7px; padding: 13px 16px; color: var(--navy); text-align: left; margin-bottom: 6px; }
+.lesson-link:hover, .lesson-link.recommended { background: var(--pale); border-color: #91a7ef; }
+.lesson-link small { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-top: 5px; }
+.lesson-link svg { flex-shrink: 0; color: var(--blue); }
+.other-workouts { margin-top: 28px; max-width: 70ch; }
+.other-workouts h2 { font-size: 30px; }
+.other-workouts p { color: var(--muted); line-height: 1.6; margin-block: 12px 18px; }
+.lesson-layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 28px; }
+.stance-explainer { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 16px; }
+.lesson-illustration { margin: 0; border: 1px solid var(--line); background: var(--pale); border-radius: 10px; overflow: hidden; }
+.illustration-top { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 16px 16px 0; font-size: 12px; }
+.illustration-top span { color: var(--muted); }
+.lesson-illustration svg { width: 100%; height: auto; display: block; }
+.demo-controls { display: flex; gap: 8px; padding-inline: 16px; }
+.demo-controls button { min-height: 44px; flex: 1; background: white; color: var(--navy); border: 1px solid var(--line); border-radius: 5px; }
+.demo-controls button[aria-pressed=true] { background: var(--blue); color: white; }
+.lesson-illustration figcaption { padding: 16px; font-size: 14px; line-height: 1.6; min-height: 118px; }
+.lesson-illustration figcaption small { display: block; color: var(--muted); font-size: 12px; margin-top: 8px; }
+.technique-notes h2, .lesson-review-preview h2, .self-review h2 { font-size: 28px; margin-top: 24px; }
+.technique-notes ul, .lesson-review-preview ul { padding-left: 22px; line-height: 1.7; font-size: 14px; }
+.technique-notes li, .lesson-review-preview li { padding-left: 4px; margin-block: 8px; }
+.lesson-practice .session-plan h2 { font-size: 32px; }
+.lesson-practice .session-plan > p { font-size: 13px; line-height: 1.6; margin-block: 12px; color: var(--muted); }
+.lesson-review-preview > p { color: var(--muted); font-size: 13px; line-height: 1.6; }
+.plain-check { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; line-height: 1.6; padding-block: 10px; cursor: pointer; }
+.plain-check input { accent-color: var(--blue); width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px; }
+.review-method { margin-top: 24px; padding: 18px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; line-height: 1.6; }
+.review-method summary { cursor: pointer; color: var(--blue); min-height: 28px; }
+.review-method p { margin-top: 12px; color: var(--muted); }
+.self-review { margin-top: 28px; padding: 24px; background: var(--pale); border-radius: 10px; }
+.self-review h2 { margin-top: 0; }
+.self-review p { margin-block: 12px; color: var(--muted); line-height: 1.6; font-size: 14px; }
+.self-review fieldset { padding: 0; margin: 18px 0; border: 0; }
+.self-review legend { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+.lesson-navigation { display: flex; justify-content: space-between; gap: 12px; margin-top: 28px; }
+.lesson-punches { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; list-style: none; margin-block: 16px; }
+.lesson-punches li { font-size: 13px; padding: 6px 9px; background: #fff1e4; border-radius: 5px; color: #653715; }
+.lesson-punches span { font-weight: 800; margin-right: 5px; }
+.lesson-board .cue-text h2 { font-size: clamp(25px, 4vw, 38px); line-height: 1.15; max-width: 30ch; margin-inline: auto; }
+.lesson-board .cue-text p { max-width: 62ch; margin-inline: auto; line-height: 1.6; }
+.history-practice { display: block; color: var(--muted); font-size: 11px; margin-top: 5px; }
+summary:focus-visible, input:focus-visible { outline: 3px solid #c85d1d; outline-offset: 4px; }
+@media (max-width: 740px) {
+  .learning-intro, .learning-module, .lesson-layout { grid-template-columns: 1fr; gap: 18px; }
+  .learning-ring { display: none; }
+  .module-heading h2 { font-size: 34px; }
+  .learning-page { padding-top: 25px; }
+  .path-progress { grid-template-columns: 1fr; }
+  .lesson-navigation { flex-wrap: wrap; }
+  .lesson-navigation .button { flex: 1; font-size: 12px; }
+  .self-review { padding: 18px; }
+}
+
 :root {
   font-family: Manrope, "Segoe UI", sans-serif;
   font-weight: 600;

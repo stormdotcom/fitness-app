@@ -1,3 +1,5 @@
+import { getLesson, lessonCue } from './curriculum.js'
+
 export const MODES = {
   boxing: {
     title: 'Boxing',
@@ -38,7 +40,7 @@ export const DEFAULT_SETTINGS = {
   bell: true,
 }
 
-export const PUNCHES = ['Jab', 'Cross', 'Lead hook', 'Rear hook']
+export const PUNCHES = ['Jab', 'Cross', 'Lead hook', 'Rear hook', 'Lead uppercut', 'Rear uppercut']
 
 const COMBOS = {
   Beginner: [[1], [2], [1, 2], [1, 1], [1, 3], [2, 3], [1, 4]],
@@ -119,10 +121,12 @@ export function startSession(mode, settings, now) {
 }
 
 function issueCue(state, now, random) {
-  const cue = state.mode === 'boxing' && state.cueSerial === 0
+  const cue = getLesson(state.settings.lessonId)
+    ? lessonCue(state.settings.lessonId, state.stance, state.cueSerial)
+    : state.mode === 'boxing' && state.cueSerial === 0
     ? {
         id: 'punch-check', kind: 'intro', title: 'Punch check', numbers: [1, 2, 3, 4],
-        detail: PUNCHES.join(' · '), speech: 'One, two, three, four.', stance: state.stance,
+        detail: PUNCHES.slice(0, 4).join(' · '), speech: 'One, two, three, four.', stance: state.stance,
       }
     : pickCue(state.mode, state.settings, state.stance, state.cue?.id, random)
   return { ...state, cue, stance: cue.stance, cueSerial: state.cueSerial + 1, nextCueAt: now + 10000 }
@@ -172,7 +176,7 @@ export function resumeSession(state, now) {
 export function scheduleCue(state, now, serial) {
   if (state.phase !== 'working' || state.pausedAt !== null || state.cueSerial !== serial) return state
   const speedFactor = { Slow: 1.3, Steady: 1, Fast: 0.72 }[state.settings.speed]
-  const gap = state.mode === 'boxing'
+  const gap = state.settings.lessonId ? 10000 : state.mode === 'boxing'
     ? { Beginner: 2650, Medium: 1950, Intermediate: 1400 }[state.settings.level]
     : { Beginner: 10500, Medium: 9000, Intermediate: 7500 }[state.settings.level]
   return { ...state, nextCueAt: now + Math.round(gap * speedFactor) }

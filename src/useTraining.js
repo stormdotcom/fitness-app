@@ -79,7 +79,7 @@ export default function useTraining() {
       finishedCue.current = state.cueSerial
       if (current) update(scheduleCue(current, now, state.cueSerial), now)
     }
-    if (state.settings.voice) audio.say(state.cue.speech, state.settings.speed, finish)
+    if (state.settings.voice && state.cue.speech) audio.say(state.cue.speech, state.settings.speed, finish)
     else finish()
   }, [audio, phase, serial, paused])
 
