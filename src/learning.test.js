@@ -134,13 +134,19 @@ test('corrupt and unavailable storage fall back without crashing', t => {
   assert.doesNotThrow(() => saveProgress({ stance: { practices: 1 } }))
 })
 
-test('existing workout modes still issue their original cues and complete', () => {
+test('workout modes issue their cues and complete', () => {
   for (const mode of ['boxing', 'ground', 'football']) {
     let state = startSession(mode, { ...DEFAULT_SETTINGS, rounds: 1 }, 0)
     state = advanceSession(state, 3000, () => 0.5)
     assert.equal(state.cue.kind, mode === 'boxing' ? 'intro' : 'drill')
-    if (mode === 'boxing') assert.equal(state.cue.detail, 'Jab · Cross · Lead hook · Rear hook')
-    state = advanceSession(state, state.nextCueAt, () => 0.5)
+    if (mode === 'boxing') {
+      for (let number = 1; number <= 4; number++) {
+        assert.deepEqual(state.cue.numbers, [number])
+        state = advanceSession(state, state.nextCueAt, () => 0.5)
+      }
+      assert.equal(state.direction, null)
+      assert.equal(state.cue.kind, 'combo')
+    } else state = advanceSession(state, state.nextCueAt, () => 0.5)
     assert.ok(state.cue.speech)
     assert.equal(advanceSession(state, state.phaseEnds).phase, 'completed')
   }

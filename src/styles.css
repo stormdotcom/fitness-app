@@ -11,6 +11,7 @@
 .next-lesson { margin-top: 25px; border-left: 4px solid var(--blue); padding-left: 18px; }
 .next-lesson > span { color: var(--muted); font-size: 13px; }
 .next-lesson h2 { font-size: 30px; margin-block: 7px 14px; }
+.stance-drill-link { margin-left: 8px; }
 .path-progress { margin-block: 32px; padding-block: 19px; border-block: 1px solid var(--line); display: grid; grid-template-columns: 1fr 1fr; gap: 12px 25px; }
 .path-progress progress { width: 100%; accent-color: var(--blue); align-self: center; }
 .path-progress p { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
@@ -227,7 +228,10 @@ main { flex: 1; }
 .phase-resting { background: #172b67; }
 .phase-preparing { background: #1d3db5; }
 .board-top { display: flex; align-items: center; justify-content: space-between; gap: 9px; min-height: 34px; }
-.phase-chip, .stance-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid #879def; border-radius: 5px; color: white; font-size: 12px; font-weight: 800; }
+.board-status { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 7px; }
+.phase-chip, .stance-chip, .direction-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid #879def; border-radius: 5px; color: white; font-size: 12px; font-weight: 800; }
+.direction-chip { border-color: var(--orange); }
+.direction-chip svg { width: 23px; height: 15px; color: var(--orange); }
 .phase-chip span { width: 7px; height: 7px; border-radius: 50%; background: var(--orange); }
 .timer-value { font-family: var(--display); font-size: clamp(98px, 15vw, 154px); font-weight: 800; line-height: .86; font-variant-numeric: tabular-nums; letter-spacing: -.045em; }
 .cue-text { margin: 21px auto 6px; min-height: 105px; max-width: 570px; }
@@ -295,6 +299,7 @@ main { flex: 1; }
 }
 
 @media (max-width: 690px) {
+  .stance-drill-link { margin: 8px 0 0; }
   .wrap { width: calc(100% - 28px); }
   .header-inner { flex-wrap: wrap; gap: 0; padding-top: 6px; }
   .header-inner nav { width: 100%; gap: 10px; }

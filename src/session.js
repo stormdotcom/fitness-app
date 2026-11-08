@@ -4,9 +4,9 @@ export const MODES = {
   boxing: {
     title: 'Boxing',
     tag: 'Shadowboxing',
-    description: 'Find your flow with called punch combos, stance switches and footwork.',
+    description: 'Practise numbered punches while circling clockwise and anticlockwise.',
     equipment: 'Open floor space',
-    instructions: 'Keep your hands up and your knees soft. Throw each numbered punch from your current stance.',
+    instructions: 'Keep your guard up and circle in small steps. Throw each numbered punch from your current stance; keep circling until the direction changes.',
     warmup: 'Warm up with easy footwork, shoulder rolls and light punches before starting.',
   },
   ground: {
@@ -43,9 +43,9 @@ export const DEFAULT_SETTINGS = {
 export const PUNCHES = ['Jab', 'Cross', 'Lead hook', 'Rear hook', 'Lead uppercut', 'Rear uppercut']
 
 const COMBOS = {
-  Beginner: [[1], [2], [1, 2], [1, 1], [1, 3], [2, 3], [1, 4]],
-  Medium: [[1, 2], [1, 3], [2, 3], [1, 1, 2], [1, 2, 3], [2, 3, 2], [1, 4, 1], [3, 2, 3]],
-  Intermediate: [[1, 2, 3], [2, 3, 2], [3, 2, 3], [1, 1, 2, 3], [1, 2, 3, 2], [2, 3, 2, 3], [1, 2, 3, 2, 3], [1, 4, 1, 2, 3]],
+  Beginner: [[1], [2], [3], [4]],
+  Medium: [[1], [2], [3], [4], [1, 2], [1, 3], [2, 3], [1, 1, 2], [1, 2, 3], [2, 3, 2], [1, 4, 1], [3, 2, 3]],
+  Intermediate: [[1], [2], [3], [4], [1, 2, 3], [2, 3, 2], [3, 2, 3], [1, 1, 2, 3], [1, 2, 3, 2], [2, 3, 2, 3], [1, 2, 3, 2, 3], [1, 4, 1, 2, 3]],
 }
 
 const DRILLS = {
@@ -62,8 +62,8 @@ const DRILLS = {
 }
 
 const MOVEMENTS = [
-  { id: 'clockwise', kind: 'movement', title: 'Move clockwise', detail: 'Circle to your right in small steps.' },
-  { id: 'counterclockwise', kind: 'movement', title: 'Move anticlockwise', detail: 'Circle to your left in small steps.' },
+  { id: 'clockwise', kind: 'movement', title: 'Change clockwise', detail: 'Circle to your right in small steps.' },
+  { id: 'counterclockwise', kind: 'movement', title: 'Change anticlockwise', detail: 'Circle to your left in small steps.' },
 ]
 
 // Keep the generated voice pack in sync with every phrase the trainer can call.
@@ -79,17 +79,19 @@ export function voicePhrases() {
   ])]
 }
 
-export function pickCue(mode, settings, stance, previous, random = Math.random) {
+export function pickCue(mode, settings, stance, previous, random = Math.random, direction = null) {
   if (mode !== 'boxing') {
     const available = DRILLS[mode][settings.level].filter(([title]) => title !== previous)
     const [title, detail] = available[Math.floor(random() * available.length)]
     return { id: title, kind: 'drill', title, detail, speech: title, stance }
   }
 
-  const movementChance = { Beginner: 0.12, Medium: 0.22, Intermediate: 0.3 }[settings.level]
+  const movementChance = { Beginner: 0, Medium: 0.22, Intermediate: 0.35 }[settings.level]
   const footwork = [
-    ...(settings.movement ? MOVEMENTS : []),
-    ...(settings.switchStance ? [{ id: 'switch', kind: 'switch', title: 'Switch stance' }] : []),
+    ...(settings.movement && settings.level !== 'Beginner' && previous !== 'clockwise' && previous !== 'counterclockwise'
+      ? MOVEMENTS.filter(cue => cue.id !== direction)
+      : []),
+    ...(settings.switchStance && settings.level !== 'Beginner' ? [{ id: 'switch', kind: 'switch', title: 'Switch stance' }] : []),
   ].filter(cue => cue.id !== previous)
 
   if (footwork.length && random() < movementChance) {
@@ -101,7 +103,7 @@ export function pickCue(mode, settings, stance, previous, random = Math.random) 
     return { ...cue, stance, speech: cue.title }
   }
 
-  const available = COMBOS[settings.level].filter(combo => combo.join('-') !== previous)
+  const available = COMBOS[settings.level]
   const numbers = available[Math.floor(random() * available.length)]
   return {
     id: numbers.join('-'), kind: 'combo', title: numbers.join(' · '), numbers,
@@ -116,20 +118,36 @@ export function startSession(mode, settings, now) {
   return {
     mode, settings, round: 1, phase: 'preparing', phaseEnds: now + PREPARATION,
     phaseDuration: PREPARATION, stance: settings.stance, cue: null,
+    direction: null, punchesSinceDirection: 0,
     cueSerial: 0, nextCueAt: null, pausedAt: null,
   }
 }
 
 function issueCue(state, now, random) {
-  const cue = getLesson(state.settings.lessonId)
+  const lesson = getLesson(state.settings.lessonId)
+  const openingCheck = state.mode === 'boxing' && !lesson && state.cueSerial < 4
+  const directionCallLimit = state.settings.level === 'Intermediate' ? 2 : 3
+  const changeDirection = state.mode === 'boxing' && !lesson && state.settings.movement &&
+    state.settings.level !== 'Beginner' &&
+    (state.direction === null || state.punchesSinceDirection >= directionCallLimit)
+  const cue = lesson
     ? lessonCue(state.settings.lessonId, state.stance, state.cueSerial)
-    : state.mode === 'boxing' && state.cueSerial === 0
+    : openingCheck
     ? {
-        id: 'punch-check', kind: 'intro', title: 'Punch check', numbers: [1, 2, 3, 4],
-        detail: PUNCHES.slice(0, 4).join(' · '), speech: 'One, two, three, four.', stance: state.stance,
+        id: `punch-check-${state.cueSerial + 1}`, kind: 'intro', title: 'Punch check',
+        numbers: [state.cueSerial + 1], detail: PUNCHES[state.cueSerial],
+        speech: String(state.cueSerial + 1), stance: state.stance,
       }
-    : pickCue(state.mode, state.settings, state.stance, state.cue?.id, random)
-  return { ...state, cue, stance: cue.stance, cueSerial: state.cueSerial + 1, nextCueAt: now + 10000 }
+    : changeDirection
+    ? MOVEMENTS[state.direction === 'clockwise' ? 1 : 0]
+    : pickCue(state.mode, state.settings, state.stance, state.cue?.id, random, state.direction)
+  const calledCue = cue.kind === 'movement' ? { ...cue, stance: state.stance, speech: cue.title } : cue
+  return {
+    ...state, cue: calledCue, stance: calledCue.stance,
+    direction: calledCue.kind === 'movement' ? calledCue.id : state.direction,
+    punchesSinceDirection: calledCue.kind === 'movement' ? 0 : state.punchesSinceDirection + (calledCue.kind === 'combo' ? 1 : 0),
+    cueSerial: state.cueSerial + 1, nextCueAt: now + 10000,
+  }
 }
 
 export function advanceSession(state, now, random = Math.random) {
@@ -176,7 +194,8 @@ export function resumeSession(state, now) {
 export function scheduleCue(state, now, serial) {
   if (state.phase !== 'working' || state.pausedAt !== null || state.cueSerial !== serial) return state
   const speedFactor = { Slow: 1.3, Steady: 1, Fast: 0.72 }[state.settings.speed]
-  const gap = state.settings.lessonId ? 10000 : state.mode === 'boxing'
+  const gap = state.settings.lessonId ? 10000 : state.mode === 'boxing' && state.cue.kind === 'intro' && state.settings.level === 'Beginner'
+    ? 3200 : state.mode === 'boxing'
     ? { Beginner: 2650, Medium: 1950, Intermediate: 1400 }[state.settings.level]
     : { Beginner: 10500, Medium: 9000, Intermediate: 7500 }[state.settings.level]
   return { ...state, nextCueAt: now + Math.round(gap * speedFactor) }

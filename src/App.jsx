@@ -11,8 +11,8 @@ import { getLesson } from './curriculum.js'
 import { LearningPath, LessonPage, LessonComplete, PunchLabels } from './Learning.jsx'
 import { readProgress, saveProgress, recordPractice, readLessonSettings, saveLessonSettings } from './storage.js'
 
-const NAV = [['train', 'Learn boxing'], ['workouts', 'Other workouts'], ['history', 'My sessions']]
-const NAV_LABEL = { train: 'Learn boxing', lesson: 'Learn boxing', workouts: 'Other workouts', setup: 'Other workouts', session: 'Learn boxing', history: 'My sessions' }
+const NAV = [['train', 'Learn boxing'], ['workouts', 'Workouts'], ['history', 'My sessions']]
+const NAV_LABEL = { train: 'Learn boxing', lesson: 'Learn boxing', workouts: 'Workouts', setup: 'Workouts', session: 'Learn boxing', history: 'My sessions' }
 const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
 
 function Header({ view, go }) {
@@ -74,8 +74,8 @@ function Home({ choose, go }) {
   )
 }
 
-function PunchKey() {
-  return <ol className="punch-key">{PUNCHES.map((punch, index) => <li key={punch}><span>{index + 1}</span>{punch}</li>)}</ol>
+function PunchKey({ count = PUNCHES.length }) {
+  return <ol className="punch-key">{PUNCHES.slice(0, count).map((punch, index) => <li key={punch}><span>{index + 1}</span>{punch}</li>)}</ol>
 }
 
 function Options({ label, name, values, settings, set, format = String }) {
@@ -131,8 +131,9 @@ function Setup({ mode, settings, set, start, testAudio, go }) {
             <Options label="Cue pace" name="speed" values={SPEEDS} {...config} />
             {mode === 'boxing' && <>
               <Options label="Starting stance" name="stance" values={STANCES} {...config} />
-              <Toggle name="movement" label="Clockwise and anticlockwise footwork" checked={settings.movement} set={set} />
-              <Toggle name="switchStance" label="Stance switches" checked={settings.switchStance} set={set} />
+              {settings.level === 'Beginner'
+                ? <p className="audio-note">Beginner keeps your chosen stance and position. Medium and Intermediate add position changes.</p>
+                : <><Toggle name="movement" label="Clockwise and anticlockwise position changes" checked={settings.movement} set={set} /><Toggle name="switchStance" label="Stance switches" checked={settings.switchStance} set={set} /></>}
             </>}
           </div>
           <div className="setting-group">
@@ -161,7 +162,7 @@ function Setup({ mode, settings, set, start, testAudio, go }) {
           <div className="workout-guide">
             <h2>{mode === 'boxing' ? 'Know your punches' : 'Before you start'}</h2>
             <p>{details.instructions}</p>
-            {mode === 'boxing' && <PunchKey />}
+            {mode === 'boxing' && <><p>Start with your guard, then hear 1, 2, 3 and 4 with a gap between each call. Beginner continues with single punches that can repeat. Higher levels add quicker, more varied calls and position changes.</p><PunchKey count={4} /></>}
             <p className="equipment"><strong>You’ll need</strong> {details.equipment}</p>
             <div className="warmup"><Info size={18} /><span>{details.warmup}</span></div>
           </div>
@@ -182,7 +183,7 @@ function Cue({ state, seconds }) {
   const cue = state.cue
   return (
     <div className="cue-text" aria-live="polite" aria-atomic="true">
-      <div className="cue-label">{({ lesson: 'Current exercise', combo: 'Punch combination', movement: 'Footwork', switch: 'Stance change', drill: 'Current drill', intro: 'Punch check' })[cue.kind]}</div>
+      <div className="cue-label">{({ lesson: 'Current exercise', combo: 'Punch call', movement: 'Position change', switch: 'Stance change', drill: 'Current drill', intro: 'Punch check' })[cue.kind]}</div>
       {cue.kind === 'movement' && <div className="direction"><DirectionArt clockwise={cue.id === 'clockwise'} /></div>}
       <h2 className={cue.numbers ? 'combo' : undefined}>{cue.numbers ? cue.numbers.join(' – ') : cue.title}</h2>
       <p>{cue.detail}</p>
@@ -205,7 +206,7 @@ function Session({ snapshot, pause, resume, requestEnd }) {
       <div className={`training-board phase-${phase}${lesson ? ' lesson-board' : ''}`}>
         <div className="board-top">
           <span className="phase-chip"><span /> {paused ? 'Paused' : phaseLabel}</span>
-          {mode === 'boxing' && <span className="stance-chip">{stance} stance</span>}
+          {mode === 'boxing' && <div className="board-status">{phase === 'working' && !lesson && state.direction && <span className="direction-chip"><DirectionArt clockwise={state.direction === 'clockwise'} /> Keep circling {state.direction === 'clockwise' ? 'clockwise' : 'anticlockwise'}</span>}<span className="stance-chip">{stance} stance</span></div>}
         </div>
         <div className="timer-value" role="timer" aria-label={`${seconds} seconds remaining`}>{formatTime(seconds)}</div>
         <Cue state={state} seconds={seconds} />
@@ -216,7 +217,7 @@ function Session({ snapshot, pause, resume, requestEnd }) {
         <button className="button outline" onClick={requestEnd}><Square size={16} /> End session</button>
       </div>
       {paused && <p className="pause-note" role="status">The timer pauses when you leave this tab. Resume when you’re ready.</p>}
-      {mode === 'boxing' && <div className="live-key">{lesson ? <PunchLabels numbers={lesson.punches} /> : <PunchKey />}</div>}
+      {mode === 'boxing' && <div className="live-key">{lesson ? <PunchLabels numbers={lesson.punches} /> : <PunchKey count={4} />}</div>}
     </section>
   )
 }
@@ -379,7 +380,7 @@ export default function App() {
       <a href="#main" className="skip-link">Skip to content</a>
       <Header view={view === 'session' && !snapshot?.state.settings.lessonId ? 'setup' : view} go={go} />
       <main id="main" ref={main} tabIndex={-1}>
-        {view === 'train' && <LearningPath progress={progress} open={openLesson} go={go} />}
+        {view === 'train' && <LearningPath progress={progress} open={openLesson} go={go} choose={choose} />}
         {view === 'workouts' && <Home choose={choose} go={go} />}
         {view === 'lesson' && <LessonPage key={lessonId} lesson={lesson} stance={settings.stance} setStance={stance => setSettings(previous => ({ ...previous, stance }))} options={lessonOptions} setOption={(name, value) => setLessonOptions(previous => ({ ...previous, [name]: value }))} bell={settings.bell} setBell={bell => setSettings(previous => ({ ...previous, bell }))} open={openLesson} go={go} progress={progress[lessonId]} saveReview={saveReview} start={() => { start('boxing', { ...settings, ...lessonOptions, lessonId, level: 'Beginner', speed: 'Steady', movement: false, switchStance: false, voice: false }); navigate('session') }} />}
         {view === 'guide' && <Guide go={go} />}

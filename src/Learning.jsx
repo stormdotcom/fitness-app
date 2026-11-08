@@ -4,13 +4,13 @@ import { RingArt } from './Artwork.jsx'
 import { MODULES, LESSONS, instruction, nextLesson, sides } from './curriculum.js'
 import { PUNCHES, formatTime } from './session.js'
 
-export function LearningPath({ progress, open, go }) {
+export function LearningPath({ progress, open, go, choose }) {
   const next = nextLesson(progress)
   const count = LESSONS.filter(item => progress[item.id]?.practices).length
   return <section className="wrap learning-page" aria-labelledby="learning-title">
     <div className="learning-intro">
       <div><p className="learning-label">Your beginner boxing path</p><h1 id="learning-title">Build your base.<br />Then build your boxing.</h1><p>Small steps, short rounds and time to review. Start with your stance and return to any lesson whenever you need.</p>
-        <div className="next-lesson"><span>{next ? 'Recommended next lesson' : 'All lessons practised — keep reviewing'}</span><h2>{next?.title ?? 'Revisit your foundations'}</h2><button className="button primary" onClick={() => open(next?.id ?? 'stance')}>{next ? 'Open lesson' : 'Review stance'} <ArrowRight size={18} /></button></div>
+        <div className="next-lesson"><span>{next ? 'Recommended next lesson' : 'All lessons practised — keep reviewing'}</span><h2>{next?.title ?? 'Revisit your foundations'}</h2><button className="button primary" onClick={() => open(next?.id ?? 'stance')}>{next ? 'Open lesson' : 'Review stance'} <ArrowRight size={18} /></button><button className="button outline stance-drill-link" onClick={() => choose('boxing')}>Practise the 1–4 stance drill <ArrowRight size={18} /></button></div>
       </div><div className="learning-ring"><RingArt /></div>
     </div>
     <div className="path-progress"><strong>{count} of {LESSONS.length} lessons practised</strong><progress max={LESSONS.length} value={count} aria-label="Lessons practised" /><p>Saved in this browser. Practice completion records time spent; it does not certify technique or mastery.</p></div>
@@ -21,7 +21,7 @@ export function LearningPath({ progress, open, go }) {
         <ol className="level-list">{module.levels.map((level, levelIndex) => <li key={level.title}><h3><span>Level {levelIndex + 1}</span> {level.title}</h3><ul>{level.lessons.map(item => <li key={item.id}><button className={`lesson-link${next?.id === item.id ? ' recommended' : ''}`} onClick={() => open(item.id)}><span>{item.title}<small>{progress[item.id]?.practices ? `Practised ${progress[item.id].practices}× · ${progress[item.id].reviewed ? 'Self-review saved' : 'Self-review pending'}` : next?.id === item.id ? 'Recommended next' : 'Ready to explore'}</small></span>{progress[item.id]?.practices ? <Check size={18} aria-label="Practised" /> : <ArrowRight size={18} />}</button></li>)}</ul></li>)}</ol>
       </section>
     })}</div>
-    <div className="other-workouts"><h2>More ways to train</h2><p>Your original boxing cue trainer, bodyweight and football workouts are still available. For boxing, learn the techniques above before trying mixed cues.</p><button className="button outline" onClick={() => go('workouts')}>Open other workouts <ArrowRight size={18} /></button></div>
+    <div className="other-workouts"><h2>More ways to train</h2><p>Set up a boxing cue session, bodyweight workout or football practice.</p><button className="button outline" onClick={() => go('workouts')}>Browse workouts <ArrowRight size={18} /></button></div>
   </section>
 }
 
